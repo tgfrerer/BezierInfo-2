@@ -317,9 +317,24 @@ function processLocale(locale) {
   var html = fs.readFileSync('./index.template.html').toString();
   var preface = content.preface.getContent.replace(/<SectionHeader name="preface" title="([^"]+)"\/>/, "<h2>$1</h2>");
   html = html.replace("{{ PREFACE }}", preface);
-  html = html.replace("{{ locale }}", locale);
   fs.ensureDirSync(locale);
   fs.writeFileSync(`./${locale}/index.html`, html);
+
+  if (process.argv.indexOf("--no-static") !== -1) {
+    console.log(`copying static assets for ${locale}...`);
+
+    // copy over the static assets. First the stylesheet
+    fs.ensureDirSync(`./${locale}/stylesheets`);
+    fs.copySync("./stylesheets/style.css", `./${locale}/stylesheets/style.css`);
+    // then the images
+    fs.ensureDirSync(`./${locale}/images`);
+    fs.copySync("./images", `./${locale}/images`);
+    // and then delete the image sources because we don't care about those
+    fs.removeSync(`./${locale}/images/latex/source`);
+    // finally, copy "lib"
+    fs.ensureDirSync(`./${locale}/lib`);
+    fs.copySync("./lib", `./${locale}/lib`);
+  }
 }
 
 // find all locales used
