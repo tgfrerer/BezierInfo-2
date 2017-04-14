@@ -27,8 +27,12 @@
     "svgo": "svgo",
     "xelatex": "xelatex",
     "pdfcrop": "pdfcrop",
-    "lazy": "run-s bootstrap build:en-GB default server",
-    "server": "http-server"
+    "prefab": "run-s bootstrap build:en-GB default",
+    "lazy": "run-s prefab lazy:server",
+    "lazy:server" : "http-server",
+    "render": "run-s prefab pack:handlers render:html lazy:server",
+    "render:html": "node tools/render-to-full-index",
+    "pack:handlers": "webpack --config webpack.handlers.config.js"
   },
   "repository": {
     "type": "git",

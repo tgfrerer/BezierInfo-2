@@ -43,8 +43,8 @@ if (lpos !== -1) { locale = process.argv[lpos+1]; }
 /**
  * turn locale markdown into locale javascript data
  */
-function processLocation(loc, fragmentid, number) {
-  var processed = { data: '', title: `Unknown title (${fragmentid})` };
+function processLocation(loc, sectionid, number) {
+  var processed = { data: '', title: `Unknown title (${sectionid})` };
   try {
     data = fs.readFileSync(loc).toString();
     data = chunk(data);
@@ -57,10 +57,10 @@ function processLocation(loc, fragmentid, number) {
         //  Allow <Graphic> components to generate themselves, and web components.
         // ------------------------------------------------------------------------
 
-        if (block.type === "gfx" || block.type === "div.figure") {
+        if (["gfx","div.figure"].indexOf(block.type) !== -1) {
           chunkData = chunkData
                       // Extend graphic elements with a knowledge of which section they are in.
-                      .replace(/<Graphic/g,`<Graphic fragmentid="${fragmentid}"`)
+                      .replace(/<Graphic/g,`<Graphic section="${sectionid}"`)
                       // extend any setup definitions with the name of the function used
                       .replace(/ setup=\{\s*this\.([\w\d]+)\s*\}/g,' setup={ this.$1 } sname="$1"')
                       // extend any draw definitions with the name of the function used
@@ -86,7 +86,7 @@ function processLocation(loc, fragmentid, number) {
       // And then title extraction/rewriting
       d = d.replace(/<h1[^>]+>([^<]+)<\/h1>/,function(_,t) {
         processed.title = t;
-        return `<SectionHeader name="${fragmentid}" title="` + t + `"${ number ? ' number="'+number+'"': ''}/>`;
+        return `<SectionHeader name="${sectionid}" title="` + t + `"${ number ? ' number="'+number+'"': ''}/>`;
       });
 
       return d;

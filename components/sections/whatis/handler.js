@@ -24,12 +24,12 @@ module.exports = {
     api.text("First linear interpolation at "+api.step+"% steps", {x:5, y:15}, offset);
 
     offset.x += dim;
-    api.drawLine({x:0, y:0}, {x:0, y:this.dim}, offset);
+    api.drawLine({x:0, y:0}, {x:0, y:dim}, offset);
     api.drawSkeleton(curve, offset);
     api.text("Second interpolation at "+api.step+"% steps", {x:5, y:15}, offset);
 
     offset.x += dim;
-    api.drawLine({x:0, y:0}, {x:0, y:this.dim}, offset);
+    api.drawLine({x:0, y:0}, {x:0, y:dim}, offset);
     api.drawSkeleton(curve, offset);
     api.text("Curve points generated this way", {x:5, y:15}, offset);
 

@@ -6,15 +6,12 @@ module.exports = function(Component) {
       propName = options.propName || "",
       values = options.values || {},
       controller = options.controller || noop,
-      defaultProps = Component.defaultProps,
-      getDefaultProps = Component.getDefaultProps,
+      defaultProps = Component.defaultProps || Component.getDefaultProps(),
       ref = "wrappedComponent";
 
-  return React.createClass({
-    values: values,
-
-    defaultProps: defaultProps,
-    getDefaultProps: getDefaultProps,
+  var ComponentClass = {
+    values,
+    defaultProps,
 
     onKeyDown: function(event, api) {
       var v = this.values[event.keyCode];
@@ -40,5 +37,7 @@ module.exports = function(Component) {
     render: function() {
       return <Component {...this.props} onKeyDown={this.onKeyDown} ref={ref} />;
     }
-  });
+  };
+
+  return React.createClass(ComponentClass);
 };
