@@ -22,13 +22,19 @@ var baseClass = {
 
     var sourceLink = `https://github.com/Pomax/BezierInfo-2/tree/master/components/sections/${this.props.section}/handler.js`;
 
+    var children = null;
+    if (this.props.children) {
+      children = this.props.children;
+      if (children.filter) {
+        children = children.filter(v => v !== `\\t`);
+      }
+    }
+
     return (
       <figure className={this.props.inline ? "inline": false}>
         <canvas ref="canvas" {...cprops} {...handlers} />
         <figcaption>
-          <a className="source" href={sourceLink}>view source</a>
-          {this.props.title}
-          {this.props.children}
+          <a className="source" href={sourceLink}>view source</a> {this.props.title} {children}
         </figcaption>
       </figure>
     );

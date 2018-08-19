@@ -91,7 +91,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 135);
+/******/ 	return __webpack_require__(__webpack_require__.s = 134);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -102,7 +102,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 var React = __webpack_require__(1);
-var Locale = __webpack_require__(12);
+var Locale = __webpack_require__(11);
 var locale = new Locale();
 
 module.exports = function generateBase(page, handler) {
@@ -789,7 +789,7 @@ var index = {
 /* harmony default export */ __webpack_exports__["default"] = (index);
 //# sourceMappingURL=preact-compat.es.js.map
 
-/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(133)))
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(132)))
 
 /***/ }),
 /* 2 */
@@ -1821,7 +1821,7 @@ var preact = {
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
 var React = __webpack_require__(1);
-var noop = __webpack_require__(98);
+var noop = __webpack_require__(97);
 
 module.exports = function (Component) {
   var options = Component.keyHandlingOptions,
@@ -1879,200 +1879,12 @@ module.exports = function (Component) {
 if (false) { var throwOnDirectAccess, isValidElement, REACT_ELEMENT_TYPE; } else {
   // By explicitly using `prop-types` you are opting into new production behavior.
   // http://fb.me/prop-types-in-prod
-  module.exports = __webpack_require__(132)();
+  module.exports = __webpack_require__(131)();
 }
 
 
 /***/ }),
 /* 5 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var invert = __webpack_require__(7);
-var matrices = [];
-
-const POLYGONAL = 'polygonal', EQUIDISTANT = 'equidistant';
-
-var binomialCoefficients = [[1],[1,1]];
-
-function binomial(n,k) {
-  if (n===0) return 1;
-  var lut = binomialCoefficients;
-  while(n >= lut.length) {
-    var s = lut.length;
-    var nextRow = [1];
-    for(var i=1,prev=s-1; i<s; i++) {
-      nextRow[i] = lut[prev][i-1] + lut[prev][i];
-    }
-    nextRow[s] = 1;
-    lut.push(nextRow);
-  }
-  return lut[n][k];
-}
-
-
-function dist(p1,p2) {
-  var dx = p1.x - p2.x, dy = p1.y - p2.y;
-  return Math.sqrt(dx*dx + dy*dy);
-}
-
-function transpose(M) {
-  var Mt = [];
-  M.forEach(row => Mt.push([]));
-  M.forEach((row,r) => row.forEach((v,c) => Mt[c][r] = v));
-  return Mt;
-}
-
-function row(M,i) {
-  return M[i];
-}
-
-function col(M,i) {
-  var col = [];
-  for(var r=0, l=M.length; r<l; r++) {
-    col.push(M[r][i]);
-  }
-  return col;
-}
-
-function multiply(M1, M2) {
-  // prep
-  var M = [];
-  var dims = [M1.length, M1[0].length, M2.length, M2[0].length];
-  // work
-  for (var r=0, c; r<dims[0]; r++) {
-    M[r] = [];
-    var _row = row(M1, r);
-    for (c=0; c<dims[3]; c++) {
-      var _col = col(M2,c);
-      var reducer = (a,v,i) => a + _col[i]*v;
-      M[r][c] = _row.reduce(reducer, 0);
-    }
-  }
-  return M;
-}
-
-function getValueColumn(P, prop) {
-  var col = [];
-  P.forEach(v => col.push([v[prop]]));
-  return col;
-}
-
-function computeBasisMatrix(n) {
-  /*
-    We can form any basis matrix using a generative approach:
-
-     - it's an M = (n x n) matrix
-     - it's a lower triangular matrix: all the entries above the main diagonal are zero
-     - the main diagonal consists of the binomial coefficients for n
-     - all entries are symmetric about the antidiagonal.
-
-    What's more, if we number rows and columns starting at 0, then
-    the value at position M[r,c], with row=r and column=c, can be
-    expressed as:
-
-      M[r,c] = (r choose c) * M[r,r] * S,
-
-      where S = 1 if r+c is even, or -1 otherwise
-
-    That is: the values in column c are directly computed off of the
-    binomial coefficients on the main diagonal, through multiplication
-    by a binomial based on matrix position, with the sign of the value
-    also determined by matrix position. This is actually very easy to
-    write out in code:
-  */
-
-  // form the square matrix, and set it to all zeroes
-  var M = [], i = n;
-  while (i--) { M[i] = "0".repeat(n).split('').map(v => parseInt(v)); }
-
-  // populate the main diagonal
-  var k = n - 1;
-  for (i=0; i<n; i++) { M[i][i] = binomial(k, i); }
-
-  // compute the remaining values
-  for (var c=0, r; c<n; c++) {
-    for (r=c+1; r<n; r++) {
-      var sign = (r+c)%2 ? -1 : 1;
-      var value = binomial(r, c) * M[r][r];
-      M[r][c] = sign * value; }}
-
-  return M;
-}
-
-var computeTimeValues = {};
-
-computeTimeValues[POLYGONAL] = function computePolygonalTimeValues(P, n) {
-  n = n || P.length;
-  var D = [0];
-  for(var i = 1; i<n; i++) {
-    D[i] = D[i-1] + dist(P[i-1], P[i]);
-  }
-  var S = [0], len = D[n-1];
-  D.forEach((v,i) => { S[i] = v/len; });
-  return S;
-}
-
-computeTimeValues[EQUIDISTANT] = function computeEquidistantTimeValues(P, n) {
-  return '0'.repeat(n).split('').map((_,i) =>i/(n-1));
-}
-
-function raiseRowPower(row, i) {
-  return row.map(v => Math.pow(v,i));
-}
-
-function formTMatrix(S, n) {
-  n = n || S.length;
-  var Tp = [];
-  // it's easier to generate the transposed matrix:
-  for(var i=0; i<n; i++) Tp.push( raiseRowPower(S, i));
-  return {
-    Tt: Tp,
-    T: transpose(Tp) // and then transpose "again" to get the real matrix
-  };
-}
-
-function computeBestFit(P, M, S, n) {
-  n = n || P.length;
-  var tm = formTMatrix(S, n),
-      T = tm.T,
-      Tt = tm.Tt,
-      M1 = invert(M),
-      TtT1 = invert(multiply(Tt,T)),
-      step1 = multiply(TtT1, Tt),
-      step2 = multiply(M1, step1),
-      X = getValueColumn(P,'x'),
-      Cx = multiply(step2, X),
-      Y = getValueColumn(P,'y'),
-      Cy = multiply(step2, Y);
-  return { x: Cx, y: Cy };
-}
-
-function fit(points, mode) {
-  // mode could be an int index to fit.modes, below,
-  // which are used to abstract time values, OR it
-  // could be a prespecified array of time values to
-  // be used in the final curve fitting step.
-  var TS;
-  if (mode instanceof Array) {
-    TS = mode;
-    mode = false;
-  }
-  mode = mode || 0;
-  var n = points.length,
-      P = Array.from(points),
-      M = computeBasisMatrix(n),
-      S = TS || computeTimeValues[fit.modes[mode]](P, n),
-      C = computeBestFit(P, M, S, n);
-  return { n, P, M, S, C };
-}
-
-fit.modes = [ POLYGONAL, EQUIDISTANT];
-
-module.exports = fit;
-
-
-/***/ }),
-/* 6 */
 /***/ (function(module, exports) {
 
 module.exports = function transpose(M) {
@@ -2081,7 +1893,7 @@ module.exports = function transpose(M) {
 
 
 /***/ }),
-/* 7 */
+/* 6 */
 /***/ (function(module, exports) {
 
 // Copied from http://blog.acipo.com/matrix-inversion-in-javascript/
@@ -2195,7 +2007,7 @@ module.exports = function matrix_invert(M) {
 };
 
 /***/ }),
-/* 8 */
+/* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2210,85 +2022,86 @@ module.exports = function matrix_invert(M) {
  *
  */
 module.exports = {
-  preface: __webpack_require__(105),
+  preface: __webpack_require__(104),
 
   // the basic topic(s) introduction(s)
-  introduction: __webpack_require__(104),
-  whatis: __webpack_require__(102),
-  explanation: __webpack_require__(100),
-  control: __webpack_require__(97),
-  extended: __webpack_require__(95),
+  introduction: __webpack_require__(103),
+  whatis: __webpack_require__(101),
+  explanation: __webpack_require__(99),
+  control: __webpack_require__(96),
+  extended: __webpack_require__(94),
 
   // basic operations
-  matrix: __webpack_require__(93),
-  decasteljau: __webpack_require__(92),
-  flattening: __webpack_require__(90),
-  splitting: __webpack_require__(88),
-  matrixsplit: __webpack_require__(86),
+  matrix: __webpack_require__(92),
+  decasteljau: __webpack_require__(91),
+  flattening: __webpack_require__(89),
+  splitting: __webpack_require__(87),
+  matrixsplit: __webpack_require__(85),
 
   // information that can be obtained through analysis
-  derivatives: __webpack_require__(85),
-  reordering: __webpack_require__(84),
-  pointvectors: __webpack_require__(81),
-  pointvectors3d: __webpack_require__(79),
-  components: __webpack_require__(77),
-  extremities: __webpack_require__(75),
-  boundingbox: __webpack_require__(73),
-  aligning: __webpack_require__(71),
-  tightbounds: __webpack_require__(69),
-  inflections: __webpack_require__(67),
-  canonical: __webpack_require__(65),
+  derivatives: __webpack_require__(84),
+  reordering: __webpack_require__(83),
+  pointvectors: __webpack_require__(80),
+  pointvectors3d: __webpack_require__(78),
+  components: __webpack_require__(76),
+  extremities: __webpack_require__(74),
+  boundingbox: __webpack_require__(72),
+  aligning: __webpack_require__(70),
+  tightbounds: __webpack_require__(68),
+  inflections: __webpack_require__(66),
+  canonical: __webpack_require__(64),
+  yforx: __webpack_require__(62),
 
-  // accurate arc length is hard, yo
-  arclength: __webpack_require__(63),
-  arclengthapprox: __webpack_require__(61),
-  tracing: __webpack_require__(59),
+  // accurate arc length is hard.
+  arclength: __webpack_require__(60),
+  arclengthapprox: __webpack_require__(58),
+  tracing: __webpack_require__(56),
 
   // curve intersections
-  intersections: __webpack_require__(57),
-  curveintersection: __webpack_require__(55),
+  intersections: __webpack_require__(54),
+  curveintersection: __webpack_require__(52),
 
   // curve manipulation
-  abc: __webpack_require__(53),
-  moulding: __webpack_require__(51),
-  pointcurves: __webpack_require__(49),
-  curvefitting: __webpack_require__(47),
+  abc: __webpack_require__(50),
+  moulding: __webpack_require__(48),
+  pointcurves: __webpack_require__(46),
+  curvefitting: __webpack_require__(44),
 
   // A quick foray into Catmull-Rom splines
-  catmullconv: __webpack_require__(45),
-  catmullmoulding: __webpack_require__(44),
+  catmullconv: __webpack_require__(41),
+  catmullmoulding: __webpack_require__(40),
 
   // "things made of more than on curve"
-  polybezier: __webpack_require__(42),
-  shapes: __webpack_require__(40),
-  drawing: __webpack_require__(38),
+  polybezier: __webpack_require__(38),
+  shapes: __webpack_require__(36),
+  //  drawing: require("./drawing"),
 
   // curve offsetting
-  projections: __webpack_require__(35),
-  offsetting: __webpack_require__(33),
-  graduatedoffset: __webpack_require__(31),
+  projections: __webpack_require__(34),
+  offsetting: __webpack_require__(32),
+  graduatedoffset: __webpack_require__(30),
 
   // circle and arc approximation
-  circles: __webpack_require__(29),
-  circles_cubic: __webpack_require__(27),
-  arcapproximation: __webpack_require__(25),
+  circles: __webpack_require__(28),
+  circles_cubic: __webpack_require__(26),
+  arcapproximation: __webpack_require__(24),
 
   // A quick foray in to B-Spline land
-  bsplines: __webpack_require__(23),
+  bsplines: __webpack_require__(22),
 
   // comments come last for obvious reasons
-  comments: __webpack_require__(15)
+  comments: __webpack_require__(14)
 };
 
 /***/ }),
-/* 9 */
+/* 8 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
 var React = __webpack_require__(1);
-var hashResolver = __webpack_require__(112);
+var hashResolver = __webpack_require__(111);
 
 var SectionHeader = React.createClass({
   displayName: "SectionHeader",
@@ -2321,7 +2134,7 @@ var SectionHeader = React.createClass({
 module.exports = SectionHeader;
 
 /***/ }),
-/* 10 */
+/* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
 (function() {
@@ -2571,7 +2384,7 @@ module.exports = SectionHeader;
     },
 
     makeline: function(p1, p2) {
-      var Bezier = __webpack_require__(11);
+      var Bezier = __webpack_require__(10);
       var x1 = p1.x,
         y1 = p1.y,
         x2 = p2.x,
@@ -3013,7 +2826,7 @@ module.exports = SectionHeader;
 
 
 /***/ }),
-/* 11 */
+/* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -3039,10 +2852,10 @@ module.exports = SectionHeader;
       ZERO = {x:0,y:0,z:0};
 
   // quite needed
-  var utils = __webpack_require__(10);
+  var utils = __webpack_require__(9);
 
   // not quite needed, but eventually this'll be useful...
-  var PolyBezier = __webpack_require__(113);
+  var PolyBezier = __webpack_require__(112);
 
   /**
    * Bezier curve constructor. The constructor argument can be one of three things:
@@ -3879,10 +3692,10 @@ module.exports = SectionHeader;
 
 
 /***/ }),
-/* 12 */
+/* 11 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var data = __webpack_require__(122);
+var data = __webpack_require__(121);
 
 var Locale = function() {
   this.data = {};
@@ -3907,7 +3720,7 @@ module.exports = Locale;
 
 
 /***/ }),
-/* 13 */
+/* 12 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3952,7 +3765,7 @@ var Footer = React.createClass({
 module.exports = Footer;
 
 /***/ }),
-/* 14 */
+/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3996,18 +3809,18 @@ module.exports = {
 };
 
 /***/ }),
-/* 15 */
+/* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var handler = __webpack_require__(14);
+var handler = __webpack_require__(13);
 var generateBase = __webpack_require__(0);
 module.exports = generateBase("comments", handler);
 
 /***/ }),
-/* 16 */
+/* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4067,7 +3880,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 17 */
+/* 16 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4122,7 +3935,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 18 */
+/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4184,7 +3997,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 19 */
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4237,7 +4050,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 20 */
+/* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4339,7 +4152,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 21 */
+/* 20 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4379,19 +4192,19 @@ module.exports = {
 };
 
 /***/ }),
-/* 22 */
+/* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
 module.exports = {
-  basicSketch: __webpack_require__(21),
-  interpolationGraph: __webpack_require__(20),
-  uniformBSpline: __webpack_require__(19),
-  centerCutBSpline: __webpack_require__(18),
-  openUniformBSpline: __webpack_require__(17),
-  rationalUniformBSpline: __webpack_require__(16),
+  basicSketch: __webpack_require__(20),
+  interpolationGraph: __webpack_require__(19),
+  uniformBSpline: __webpack_require__(18),
+  centerCutBSpline: __webpack_require__(17),
+  openUniformBSpline: __webpack_require__(16),
+  rationalUniformBSpline: __webpack_require__(15),
 
   bindKnots: function bindKnots(owner, knots, ref) {
     this.refs[ref].bindKnots(owner, knots);
@@ -4403,18 +4216,18 @@ module.exports = {
 };
 
 /***/ }),
-/* 23 */
+/* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var handler = __webpack_require__(22);
+var handler = __webpack_require__(21);
 var generateBase = __webpack_require__(0);
 module.exports = generateBase("bsplines", handler);
 
 /***/ }),
-/* 24 */
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4596,19 +4409,19 @@ module.exports = {
 };
 
 /***/ }),
-/* 25 */
+/* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var handler = __webpack_require__(24);
+var handler = __webpack_require__(23);
 var generateBase = __webpack_require__(0);
 var keyHandling = __webpack_require__(3);
 module.exports = keyHandling(generateBase("arcapproximation", handler));
 
 /***/ }),
-/* 26 */
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4820,18 +4633,18 @@ module.exports = {
 };
 
 /***/ }),
-/* 27 */
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var handler = __webpack_require__(26);
+var handler = __webpack_require__(25);
 var generateBase = __webpack_require__(0);
 module.exports = generateBase("circles_cubic", handler);
 
 /***/ }),
-/* 28 */
+/* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4896,18 +4709,18 @@ module.exports = {
 };
 
 /***/ }),
-/* 29 */
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var handler = __webpack_require__(28);
+var handler = __webpack_require__(27);
 var generateBase = __webpack_require__(0);
 module.exports = generateBase("circles", handler);
 
 /***/ }),
-/* 30 */
+/* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4953,19 +4766,19 @@ module.exports = {
 };
 
 /***/ }),
-/* 31 */
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var handler = __webpack_require__(30);
+var handler = __webpack_require__(29);
 var generateBase = __webpack_require__(0);
 var keyHandling = __webpack_require__(3);
 module.exports = keyHandling(generateBase("graduatedoffset", handler));
 
 /***/ }),
-/* 32 */
+/* 31 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5031,19 +4844,19 @@ module.exports = {
 };
 
 /***/ }),
-/* 33 */
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var handler = __webpack_require__(32);
+var handler = __webpack_require__(31);
 var generateBase = __webpack_require__(0);
 var keyHandling = __webpack_require__(3);
 module.exports = keyHandling(generateBase("offsetting", handler));
 
 /***/ }),
-/* 34 */
+/* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5097,199 +4910,18 @@ module.exports = {
 };
 
 /***/ }),
-/* 35 */
+/* 34 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var handler = __webpack_require__(34);
+var handler = __webpack_require__(33);
 var generateBase = __webpack_require__(0);
 module.exports = generateBase("projections", handler);
 
 /***/ }),
-/* 36 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var tau = Math.PI*2;
-
-function sqr(v) {
-  return v * v;
-}
-
-function dist2(a, b) {
-  return sqr(a.x - b.x) + sqr(a.y - b.y);
-}
-
-function distToSegmentSquared(p, v, w) {
-  var l2 = dist2(v, w);
-  if (l2 === 0) return dist2(p, v);
-  var t = ((p.x - v.x) * (w.x - v.x) + (p.y - v.y) * (w.y - v.y)) / l2;
-  if (t < 0) return dist2(p, v);
-  if (t > 1) return dist2(p, w);
-  return dist2(p, {
-    x: v.x + t * (w.x - v.x),
-    y: v.y + t * (w.y - v.y)
-  });
-}
-
-function distToSegment(p, v, w) {
-  return Math.sqrt(distToSegmentSquared(p, v, w));
-}
-
-// Ramer–Douglas–Peucker simplification
-class RDP {
-
-  constructor(threshold) {
-    this.threshold = threshold || 2.5;
-  }
-
-  runRDP(coords) {
-    coords = coords.slice();
-    var len = coords.length;
-
-    coords[0].start = true;
-    coords[len-1].end = true;
-
-    if(coords.length === 2) {
-      coords[0].keep = true;
-      coords[1].keep = true;
-      return coords;
-    }
-
-    return this.reducePoints(coords);
-  }
-
-  reducePoints(coords) {
-    var e = coords.length-1,
-        v = coords[0],
-        w = coords[e],
-        md = 0,
-        mdi = 0,
-        t = this.threshold,
-        p,i,d;
-
-    for(i=1; i<e-1; i++) {
-      p = coords[i];
-      d = distToSegment(p, v, w);
-      if(d>md) { md=d; mdi=i; }
-    }
-
-    // if a transition is detected, process each set separately
-    if(md > t) {
-      this.runRDP(coords.slice(0, mdi+1))
-      this.runRDP(coords.slice(mdi));
-    } else {
-      v.keep = true;
-      w.keep = true;
-    }
-
-    // filter out all unmarked coordinates
-    return coords.filter(p => p.keep);
-  }
-}
-
-var rdp = new RDP();
-
-if(true) {
-  module.exports = rdp;
-}
-
-
-/***/ }),
-/* 37 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var RDP = __webpack_require__(36);
-var fit = __webpack_require__(5);
-
-var colors = ['#999', '#499', '#949', '#994', '#449', '#944', '#444'];
-
-function getPseudoRandomColor(i) {
-  i = i % colors.length;
-  return colors[i];
-}
-
-module.exports = {
-  setup: function setup(api) {
-    this.api = api;
-    api.setSize(600, 250);
-    api.setPanelCount(1);
-    api.setColor('lightgrey');
-    api.drawGrid(20, 10);
-
-    this.coordinates = [];
-    this.reduced = [];
-  },
-
-  draw: function draw(api, curve) {
-    // is there a reduced set to draw?
-    if (this.reduced.length > 0) {
-      api.setColor('red');
-      api.drawPoints(this.reduced);
-
-      // make curves
-      var curves = [],
-          fc,
-          points;
-      for (var i = 0, e = this.reduced.length; i < e; i += 3) {
-        fc = fit(this.reduced.slice(i, i + 4));
-        // for now, don't build if we can't build a cubic.
-        if (fc.C.x.length < 4) break;
-        points = fc.C.x.map(function (x, i) {
-          return {
-            x: x[0],
-            y: fc.C.y[i][0]
-          };
-        });
-        curves.push(new api.Bezier(points));
-      }
-      curves.forEach(function (c, i) {
-        api.setColor(getPseudoRandomColor(i));
-        api.drawCurve(c);
-      });
-
-      // make catmull-rom curves
-
-      // ...code goes here...
-    }
-
-    // draw the user supplied path points
-    api.setColor('black');
-    var last = this.coordinates.length - 1;
-    if (last >= 0) {
-      api.drawPoint(this.coordinates[last]);
-    }
-  },
-
-  onMouseUp: function onMouseUp(evt, api) {
-    if (this.coordinates.length < 2) return;
-    this.reduced = RDP.runRDP(this.coordinates);
-    api.redraw();
-  },
-
-  onMouseDrag: function onMouseDrag(evt, api) {
-    this.coordinates.push({ x: api.mx, y: api.my });
-    api.redraw();
-  }
-};
-
-/***/ }),
-/* 38 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var handler = __webpack_require__(37);
-var generateBase = __webpack_require__(0);
-module.exports = generateBase("drawing", handler);
-
-/***/ }),
-/* 39 */
+/* 35 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5370,18 +5002,18 @@ module.exports = {
 };
 
 /***/ }),
-/* 40 */
+/* 36 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var handler = __webpack_require__(39);
+var handler = __webpack_require__(35);
 var generateBase = __webpack_require__(0);
 module.exports = generateBase("shapes", handler);
 
 /***/ }),
-/* 41 */
+/* 37 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5650,18 +5282,18 @@ module.exports = {
 };
 
 /***/ }),
-/* 42 */
+/* 38 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var handler = __webpack_require__(41);
+var handler = __webpack_require__(37);
 var generateBase = __webpack_require__(0);
 module.exports = generateBase("polybezier", handler);
 
 /***/ }),
-/* 43 */
+/* 39 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5795,19 +5427,19 @@ module.exports = {
 };
 
 /***/ }),
-/* 44 */
+/* 40 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var handler = __webpack_require__(43);
+var handler = __webpack_require__(39);
 var generateBase = __webpack_require__(0);
 var keyHandling = __webpack_require__(3);
 module.exports = keyHandling(generateBase("catmullmoulding", handler));
 
 /***/ }),
-/* 45 */
+/* 41 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5817,13 +5449,211 @@ var generateBase = __webpack_require__(0);
 module.exports = generateBase("catmullconv");
 
 /***/ }),
-/* 46 */
+/* 42 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var invert = __webpack_require__(6);
+var matrices = [];
+
+const POLYGONAL = 'polygonal', EQUIDISTANT = 'equidistant';
+
+var binomialCoefficients = [[1],[1,1]];
+
+function binomial(n,k) {
+  if (n===0) return 1;
+  var lut = binomialCoefficients;
+  while(n >= lut.length) {
+    var s = lut.length;
+    var nextRow = [1];
+    for(var i=1,prev=s-1; i<s; i++) {
+      nextRow[i] = lut[prev][i-1] + lut[prev][i];
+    }
+    nextRow[s] = 1;
+    lut.push(nextRow);
+  }
+  return lut[n][k];
+}
+
+
+function dist(p1,p2) {
+  var dx = p1.x - p2.x, dy = p1.y - p2.y;
+  return Math.sqrt(dx*dx + dy*dy);
+}
+
+function transpose(M) {
+  var Mt = [];
+  M.forEach(row => Mt.push([]));
+  M.forEach((row,r) => row.forEach((v,c) => Mt[c][r] = v));
+  return Mt;
+}
+
+function row(M,i) {
+  return M[i];
+}
+
+function col(M,i) {
+  var col = [];
+  for(var r=0, l=M.length; r<l; r++) {
+    col.push(M[r][i]);
+  }
+  return col;
+}
+
+function multiply(M1, M2) {
+  // prep
+  var M = [];
+  var dims = [M1.length, M1[0].length, M2.length, M2[0].length];
+  // work
+  for (var r=0, c; r<dims[0]; r++) {
+    M[r] = [];
+    var _row = row(M1, r);
+    for (c=0; c<dims[3]; c++) {
+      var _col = col(M2,c);
+      var reducer = (a,v,i) => a + _col[i]*v;
+      M[r][c] = _row.reduce(reducer, 0);
+    }
+  }
+  return M;
+}
+
+function getValueColumn(P, prop) {
+  var col = [];
+  P.forEach(v => col.push([v[prop]]));
+  return col;
+}
+
+function computeBasisMatrix(n) {
+  /*
+    We can form any basis matrix using a generative approach:
+
+     - it's an M = (n x n) matrix
+     - it's a lower triangular matrix: all the entries above the main diagonal are zero
+     - the main diagonal consists of the binomial coefficients for n
+     - all entries are symmetric about the antidiagonal.
+
+    What's more, if we number rows and columns starting at 0, then
+    the value at position M[r,c], with row=r and column=c, can be
+    expressed as:
+
+      M[r,c] = (r choose c) * M[r,r] * S,
+
+      where S = 1 if r+c is even, or -1 otherwise
+
+    That is: the values in column c are directly computed off of the
+    binomial coefficients on the main diagonal, through multiplication
+    by a binomial based on matrix position, with the sign of the value
+    also determined by matrix position. This is actually very easy to
+    write out in code:
+  */
+
+  // form the square matrix, and set it to all zeroes
+  var M = [], i = n;
+  while (i--) { M[i] = "0".repeat(n).split('').map(v => parseInt(v)); }
+
+  // populate the main diagonal
+  var k = n - 1;
+  for (i=0; i<n; i++) { M[i][i] = binomial(k, i); }
+
+  // compute the remaining values
+  for (var c=0, r; c<n; c++) {
+    for (r=c+1; r<n; r++) {
+      var sign = (r+c)%2 ? -1 : 1;
+      var value = binomial(r, c) * M[r][r];
+      M[r][c] = sign * value; }}
+
+  return M;
+}
+
+var computeTimeValues = {};
+
+computeTimeValues[POLYGONAL] = function computePolygonalTimeValues(P, n) {
+  n = n || P.length;
+  var D = [0];
+  for(var i = 1; i<n; i++) {
+    D[i] = D[i-1] + dist(P[i-1], P[i]);
+  }
+  var S = [0], len = D[n-1];
+  D.forEach((v,i) => { S[i] = v/len; });
+  return S;
+}
+
+computeTimeValues[EQUIDISTANT] = function computeEquidistantTimeValues(P, n) {
+  return '0'.repeat(n).split('').map((_,i) =>i/(n-1));
+}
+
+function raiseRowPower(row, i) {
+  return row.map(v => Math.pow(v,i));
+}
+
+function formTMatrix(S, n) {
+  n = n || S.length;
+  var Tp = [];
+  // it's easier to generate the transposed matrix:
+  for(var i=0; i<n; i++) Tp.push( raiseRowPower(S, i));
+  return {
+    Tt: Tp,
+    T: transpose(Tp) // and then transpose "again" to get the real matrix
+  };
+}
+
+function computeBestFit(P, M, S, n) {
+  n = n || P.length;
+  var tm = formTMatrix(S, n),
+      T = tm.T,
+      Tt = tm.Tt,
+      M1 = invert(M),
+      TtT1 = invert(multiply(Tt,T)),
+      step1 = multiply(TtT1, Tt),
+      step2 = multiply(M1, step1),
+      X = getValueColumn(P,'x'),
+      Cx = multiply(step2, X),
+      Y = getValueColumn(P,'y'),
+      Cy = multiply(step2, Y);
+  return { x: Cx, y: Cy };
+}
+
+function fit(points, mode) {
+  // mode could be an int index to fit.modes, below,
+  // which are used to abstract time values, OR it
+  // could be a prespecified array of time values to
+  // be used in the final curve fitting step.
+  var TS;
+  if (mode instanceof Array) {
+    TS = mode;
+    mode = false;
+  }
+  mode = mode || 0;
+  var n = points.length,
+      P = Array.from(points),
+      M = computeBasisMatrix(n),
+      S = TS || computeTimeValues[fit.modes[mode]](P, n),
+      C = computeBestFit(P, M, S, n);
+  return { n, P, M, S, C };
+}
+
+fit.modes = [ POLYGONAL, EQUIDISTANT];
+
+/**
+ * Returns object:
+ * {
+ *   n: curve order
+ *   P: input points; array
+ *   M: basis matrix; 2D array
+ *   S: time values; array
+ *   C: curve points; array of {x:[], y[]}
+ * }
+ */
+module.exports = fit;
+
+
+/***/ }),
+/* 43 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var fit = __webpack_require__(5);
+var fit = __webpack_require__(42);
 
 module.exports = {
   setup: function setup(api) {
@@ -5910,18 +5740,18 @@ module.exports = {
 };
 
 /***/ }),
-/* 47 */
+/* 44 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var handler = __webpack_require__(46);
+var handler = __webpack_require__(43);
 var generateBase = __webpack_require__(0);
 module.exports = generateBase("curvefitting", handler);
 
 /***/ }),
-/* 48 */
+/* 45 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6089,18 +5919,18 @@ module.exports = {
 };
 
 /***/ }),
-/* 49 */
+/* 46 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var handler = __webpack_require__(48);
+var handler = __webpack_require__(45);
 var generateBase = __webpack_require__(0);
 module.exports = generateBase("pointcurves", handler);
 
 /***/ }),
-/* 50 */
+/* 47 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6315,18 +6145,18 @@ module.exports = {
 };
 
 /***/ }),
-/* 51 */
+/* 48 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var handler = __webpack_require__(50);
+var handler = __webpack_require__(47);
 var generateBase = __webpack_require__(0);
 module.exports = generateBase("moulding", handler);
 
 /***/ }),
-/* 52 */
+/* 49 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6507,18 +6337,18 @@ module.exports = {
 };
 
 /***/ }),
-/* 53 */
+/* 50 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var handler = __webpack_require__(52);
+var handler = __webpack_require__(49);
 var generateBase = __webpack_require__(0);
 module.exports = generateBase("abc", handler);
 
 /***/ }),
-/* 54 */
+/* 51 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6662,18 +6492,18 @@ module.exports = {
 };
 
 /***/ }),
-/* 55 */
+/* 52 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var handler = __webpack_require__(54);
+var handler = __webpack_require__(51);
 var generateBase = __webpack_require__(0);
 module.exports = generateBase("curveintersection", handler);
 
 /***/ }),
-/* 56 */
+/* 53 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6752,18 +6582,18 @@ module.exports = {
 };
 
 /***/ }),
-/* 57 */
+/* 54 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var handler = __webpack_require__(56);
+var handler = __webpack_require__(53);
 var generateBase = __webpack_require__(0);
 module.exports = generateBase("intersections", handler);
 
 /***/ }),
-/* 58 */
+/* 55 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6902,19 +6732,19 @@ module.exports = {
 };
 
 /***/ }),
-/* 59 */
+/* 56 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var handler = __webpack_require__(58);
+var handler = __webpack_require__(55);
 var generateBase = __webpack_require__(0);
 var keyHandling = __webpack_require__(3);
 module.exports = keyHandling(generateBase("tracing", handler));
 
 /***/ }),
-/* 60 */
+/* 57 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6981,19 +6811,19 @@ module.exports = {
 };
 
 /***/ }),
-/* 61 */
+/* 58 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var handler = __webpack_require__(60);
+var handler = __webpack_require__(57);
 var generateBase = __webpack_require__(0);
 var keyHandling = __webpack_require__(3);
 module.exports = keyHandling(generateBase("arclengthapprox", handler));
 
 /***/ }),
-/* 62 */
+/* 59 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7094,18 +6924,50 @@ module.exports = {
 };
 
 /***/ }),
-/* 63 */
+/* 60 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var handler = __webpack_require__(62);
+var handler = __webpack_require__(59);
 var generateBase = __webpack_require__(0);
 module.exports = generateBase("arclength", handler);
 
 /***/ }),
-/* 64 */
+/* 61 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+module.exports = {
+
+  setup: function setup(api) {
+    var curve = api.getDefaultCubic();
+    api.setCurve(curve);
+  },
+
+  draw: function draw(api, curve) {
+    api.reset();
+    api.drawSkeleton(curve);
+    api.drawCurve(curve);
+  }
+};
+
+/***/ }),
+/* 62 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var handler = __webpack_require__(61);
+var generateBase = __webpack_require__(0);
+module.exports = generateBase("yforx", handler);
+
+/***/ }),
+/* 63 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7275,18 +7137,18 @@ module.exports = {
 };
 
 /***/ }),
-/* 65 */
+/* 64 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var handler = __webpack_require__(64);
+var handler = __webpack_require__(63);
 var generateBase = __webpack_require__(0);
 module.exports = generateBase("canonical", handler);
 
 /***/ }),
-/* 66 */
+/* 65 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7311,18 +7173,18 @@ module.exports = {
 };
 
 /***/ }),
-/* 67 */
+/* 66 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var handler = __webpack_require__(66);
+var handler = __webpack_require__(65);
 var generateBase = __webpack_require__(0);
 module.exports = generateBase("inflections", handler);
 
 /***/ }),
-/* 68 */
+/* 67 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7397,18 +7259,18 @@ module.exports = {
 };
 
 /***/ }),
-/* 69 */
+/* 68 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var handler = __webpack_require__(68);
+var handler = __webpack_require__(67);
 var generateBase = __webpack_require__(0);
 module.exports = generateBase("tightbounds", handler);
 
 /***/ }),
-/* 70 */
+/* 69 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7470,18 +7332,18 @@ module.exports = {
 };
 
 /***/ }),
-/* 71 */
+/* 70 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var handler = __webpack_require__(70);
+var handler = __webpack_require__(69);
 var generateBase = __webpack_require__(0);
 module.exports = generateBase("aligning", handler);
 
 /***/ }),
-/* 72 */
+/* 71 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7513,18 +7375,18 @@ module.exports = {
 };
 
 /***/ }),
-/* 73 */
+/* 72 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var handler = __webpack_require__(72);
+var handler = __webpack_require__(71);
 var generateBase = __webpack_require__(0);
 module.exports = generateBase("boundingbox", handler);
 
 /***/ }),
-/* 74 */
+/* 73 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7589,18 +7451,18 @@ module.exports = {
 };
 
 /***/ }),
-/* 75 */
+/* 74 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var handler = __webpack_require__(74);
+var handler = __webpack_require__(73);
 var generateBase = __webpack_require__(0);
 module.exports = generateBase("extremities", handler);
 
 /***/ }),
-/* 76 */
+/* 75 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7652,18 +7514,18 @@ module.exports = {
 };
 
 /***/ }),
-/* 77 */
+/* 76 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var handler = __webpack_require__(76);
+var handler = __webpack_require__(75);
 var generateBase = __webpack_require__(0);
 module.exports = generateBase("components", handler);
 
 /***/ }),
-/* 78 */
+/* 77 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -7944,18 +7806,18 @@ module.exports = {
 };
 
 /***/ }),
-/* 79 */
+/* 78 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var handler = __webpack_require__(78);
+var handler = __webpack_require__(77);
 var generateBase = __webpack_require__(0);
 module.exports = generateBase("pointvectors3d", handler);
 
 /***/ }),
-/* 80 */
+/* 79 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8001,21 +7863,21 @@ module.exports = {
 };
 
 /***/ }),
-/* 81 */
+/* 80 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var handler = __webpack_require__(80);
+var handler = __webpack_require__(79);
 var generateBase = __webpack_require__(0);
 module.exports = generateBase("pointvectors", handler);
 
 /***/ }),
-/* 82 */
+/* 81 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var transpose = __webpack_require__(6);
+var transpose = __webpack_require__(5);
 
 module.exports = function multiply(m1, m2) {
 	var M = [];
@@ -8031,15 +7893,15 @@ module.exports = function multiply(m1, m2) {
 
 
 /***/ }),
-/* 83 */
+/* 82 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var invert = __webpack_require__(7);
-var multiply = __webpack_require__(82);
-var transpose = __webpack_require__(6);
+var invert = __webpack_require__(6);
+var multiply = __webpack_require__(81);
+var transpose = __webpack_require__(5);
 
 var Reordering = {
   statics: {
@@ -8191,19 +8053,19 @@ var Reordering = {
 module.exports = Reordering;
 
 /***/ }),
-/* 84 */
+/* 83 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var handler = __webpack_require__(83);
+var handler = __webpack_require__(82);
 var generateBase = __webpack_require__(0);
 var keyHandling = __webpack_require__(3);
 module.exports = keyHandling(generateBase("reordering", handler));
 
 /***/ }),
-/* 85 */
+/* 84 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8213,7 +8075,7 @@ var generateBase = __webpack_require__(0);
 module.exports = generateBase("derivatives");
 
 /***/ }),
-/* 86 */
+/* 85 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8223,7 +8085,7 @@ var generateBase = __webpack_require__(0);
 module.exports = generateBase("matrixsplit");
 
 /***/ }),
-/* 87 */
+/* 86 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8330,18 +8192,18 @@ module.exports = {
 };
 
 /***/ }),
-/* 88 */
+/* 87 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var handler = __webpack_require__(87);
+var handler = __webpack_require__(86);
 var generateBase = __webpack_require__(0);
 module.exports = generateBase("splitting", handler);
 
 /***/ }),
-/* 89 */
+/* 88 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8412,19 +8274,19 @@ module.exports = {
 };
 
 /***/ }),
-/* 90 */
+/* 89 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var handler = __webpack_require__(89);
+var handler = __webpack_require__(88);
 var generateBase = __webpack_require__(0);
 var keyHandling = __webpack_require__(3);
 module.exports = keyHandling(generateBase("flattening", handler));
 
 /***/ }),
-/* 91 */
+/* 90 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8463,18 +8325,18 @@ module.exports = {
 };
 
 /***/ }),
-/* 92 */
+/* 91 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var handler = __webpack_require__(91);
+var handler = __webpack_require__(90);
 var generateBase = __webpack_require__(0);
 module.exports = generateBase("decasteljau", handler);
 
 /***/ }),
-/* 93 */
+/* 92 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8484,7 +8346,7 @@ var generateBase = __webpack_require__(0);
 module.exports = generateBase("matrix");
 
 /***/ }),
-/* 94 */
+/* 93 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8529,18 +8391,18 @@ module.exports = {
 };
 
 /***/ }),
-/* 95 */
+/* 94 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var handler = __webpack_require__(94);
+var handler = __webpack_require__(93);
 var generateBase = __webpack_require__(0);
 module.exports = generateBase("extended", handler);
 
 /***/ }),
-/* 96 */
+/* 95 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8709,25 +8571,25 @@ module.exports = {
 };
 
 /***/ }),
-/* 97 */
+/* 96 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var handler = __webpack_require__(96);
+var handler = __webpack_require__(95);
 var generateBase = __webpack_require__(0);
 module.exports = generateBase("control", handler);
 
 /***/ }),
-/* 98 */
+/* 97 */
 /***/ (function(module, exports) {
 
 module.exports = function(){};
 
 
 /***/ }),
-/* 99 */
+/* 98 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8787,19 +8649,19 @@ module.exports = {
 };
 
 /***/ }),
-/* 100 */
+/* 99 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var handler = __webpack_require__(99);
+var handler = __webpack_require__(98);
 var generateBase = __webpack_require__(0);
 var keyHandling = __webpack_require__(3);
 module.exports = keyHandling(generateBase("explanation", handler));
 
 /***/ }),
-/* 101 */
+/* 100 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8918,18 +8780,18 @@ module.exports = {
 };
 
 /***/ }),
-/* 102 */
+/* 101 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var handler = __webpack_require__(101);
+var handler = __webpack_require__(100);
 var generateBase = __webpack_require__(0);
 module.exports = generateBase("whatis", handler);
 
 /***/ }),
-/* 103 */
+/* 102 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8954,18 +8816,18 @@ module.exports = {
 };
 
 /***/ }),
-/* 104 */
+/* 103 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var handler = __webpack_require__(103);
+var handler = __webpack_require__(102);
 var generateBase = __webpack_require__(0);
 module.exports = generateBase("introduction", handler);
 
 /***/ }),
-/* 105 */
+/* 104 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8975,16 +8837,16 @@ var generateBase = __webpack_require__(0);
 module.exports = generateBase("preface");
 
 /***/ }),
-/* 106 */
+/* 105 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
 var React = __webpack_require__(1);
-var sections = __webpack_require__(8);
+var sections = __webpack_require__(7);
 var sectionPages = Object.keys(sections);
-var SectionHeader = __webpack_require__(9);
+var SectionHeader = __webpack_require__(8);
 
 var Navigation = React.createClass({
   displayName: "Navigation",
@@ -9035,7 +8897,7 @@ var Navigation = React.createClass({
 module.exports = Navigation;
 
 /***/ }),
-/* 107 */
+/* 106 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9050,6 +8912,10 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 var React = __webpack_require__(1);
+
+/**
+ * Use as <SliderSet options={ [v1, v2, ...] } getLabel={ function() } />
+ */
 
 var SliderSet = function (_React$Component) {
   _inherits(SliderSet, _React$Component);
@@ -9072,20 +8938,30 @@ var SliderSet = function (_React$Component) {
       var min = props.min || 0;
       var max = props.max || 1;
       var step = props.step || (max - min) / 100;
+
+      var getLabel = props.getLabel;
+      var getValueLabel = props.getValueLabel;
+
       var rows = this.options;
       var sliders = rows.map(function (v, i) {
+        var label = getLabel ? getLabel(i) : React.createElement(
+          "span",
+          null,
+          "t",
+          React.createElement(
+            "sub",
+            null,
+            i
+          )
+        );
+        var valueLabel = getValueLabel ? getValueLabel(i) : (v + "").substring(0, 4);
         return React.createElement(
           "div",
           null,
           React.createElement(
             "label",
             null,
-            "t",
-            React.createElement(
-              "sub",
-              null,
-              i
-            )
+            label
           ),
           React.createElement("input", {
             type: "range",
@@ -9097,11 +8973,12 @@ var SliderSet = function (_React$Component) {
             onChange: function onChange(e) {
               _this2.options[i] = e.target.value;
               props.onChange(i, _this2.options);
+              _this2.forceUpdate();
             } }),
           React.createElement(
             "span",
             null,
-            parseFloat(v).toFixed(2)
+            valueLabel
           )
         );
       });
@@ -9125,7 +9002,7 @@ var SliderSet = function (_React$Component) {
 module.exports = SliderSet;
 
 /***/ }),
-/* 108 */
+/* 107 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9203,7 +9080,7 @@ var WeightController = React.createClass({
 module.exports = WeightController;
 
 /***/ }),
-/* 109 */
+/* 108 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9267,7 +9144,7 @@ var KnotController = React.createClass({
 module.exports = KnotController;
 
 /***/ }),
-/* 110 */
+/* 109 */
 /***/ (function(module, exports) {
 
 // https://github.com/thibauts/b-spline
@@ -9355,7 +9232,7 @@ module.exports = function interpolate(t, degree, points, knots, weights, result,
 
 
 /***/ }),
-/* 111 */
+/* 110 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9363,7 +9240,7 @@ module.exports = function interpolate(t, degree, points, knots, weights, result,
 
 var React = __webpack_require__(1);
 
-var interpolate = __webpack_require__(110);
+var interpolate = __webpack_require__(109);
 
 var BSplineGraphic = React.createClass({
   displayName: "BSplineGraphic",
@@ -9764,7 +9641,7 @@ var BSplineGraphic = React.createClass({
 module.exports = BSplineGraphic;
 
 /***/ }),
-/* 112 */
+/* 111 */
 /***/ (function(module, exports) {
 
 function scrollToHash() {
@@ -9810,13 +9687,13 @@ module.exports = function() {
 
 
 /***/ }),
-/* 113 */
+/* 112 */
 /***/ (function(module, exports, __webpack_require__) {
 
 (function() {
   "use strict";
 
-  var utils = __webpack_require__(10);
+  var utils = __webpack_require__(9);
 
   /**
    * Poly Bezier
@@ -9872,14 +9749,14 @@ module.exports = function() {
 
 
 /***/ }),
-/* 114 */
+/* 113 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(11);
+module.exports = __webpack_require__(10);
 
 
 /***/ }),
-/* 115 */
+/* 114 */
 /***/ (function(module, exports) {
 
 module.exports = function(module) {
@@ -9907,7 +9784,7 @@ module.exports = function(module) {
 
 
 /***/ }),
-/* 116 */
+/* 115 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(module) {var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;
@@ -12671,18 +12548,18 @@ module.exports = function(module) {
 
 }).call(this);
 
-/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(115)(module)))
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(114)(module)))
 
 /***/ }),
-/* 117 */
+/* 116 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
 var hasWindow = typeof window !== "undefined";
-var chroma = hasWindow && window.chroma ? window.chroma : __webpack_require__(116);
-var Bezier = hasWindow && window.Bezier ? window.Bezier : __webpack_require__(114);
+var chroma = hasWindow && window.chroma ? window.chroma : __webpack_require__(115);
+var Bezier = hasWindow && window.Bezier ? window.Bezier : __webpack_require__(113);
 
 var sin = Math.sin;
 var cos = Math.cos;
@@ -13356,6 +13233,12 @@ if (true) {
 }
 
 /***/ }),
+/* 117 */
+/***/ (function(module, exports) {
+
+/* (ignored) */
+
+/***/ }),
 /* 118 */
 /***/ (function(module, exports) {
 
@@ -13363,12 +13246,6 @@ if (true) {
 
 /***/ }),
 /* 119 */
-/***/ (function(module, exports) {
-
-/* (ignored) */
-
-/***/ }),
-/* 120 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_RESULT__;/*!
@@ -13405,7 +13282,7 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_RESULT__;/*!
 
 var paper = function(self, undefined) {
 
-self = self || __webpack_require__(119);
+self = self || __webpack_require__(118);
 var window = self.window,
 	document = self.document;
 
@@ -28156,7 +28033,7 @@ paper = new (PaperScope.inject(Base.exports, {
 }))();
 
 if (paper.agent.node) {
-	__webpack_require__(118)(paper);
+	__webpack_require__(117)(paper);
 }
 
 if (true) {
@@ -28172,7 +28049,7 @@ return paper;
 
 
 /***/ }),
-/* 121 */
+/* 120 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -28204,6 +28081,16 @@ var baseClass = {
 
     var sourceLink = "https://github.com/Pomax/BezierInfo-2/tree/master/components/sections/" + this.props.section + "/handler.js";
 
+    var children = null;
+    if (this.props.children) {
+      children = this.props.children;
+      if (children.filter) {
+        children = children.filter(function (v) {
+          return v !== "\\t";
+        });
+      }
+    }
+
     return React.createElement(
       "figure",
       { className: this.props.inline ? "inline" : false },
@@ -28216,8 +28103,10 @@ var baseClass = {
           { className: "source", href: sourceLink },
           "view source"
         ),
+        " ",
         this.props.title,
-        this.props.children
+        " ",
+        children
       )
     );
   },
@@ -28233,7 +28122,7 @@ var baseClass = {
     this.ctx.scale(dpr, dpr);
 
     if (this.props.paperjs) {
-      var Paper = this.Paper = __webpack_require__(120);
+      var Paper = this.Paper = __webpack_require__(119);
       Paper.setup(cvs);
     }
 
@@ -28253,7 +28142,7 @@ var baseClass = {
 
 // For some reason we can copy from gfx into base but
 // not the other way around, while preserving context.
-var gfxObject = __webpack_require__(117);
+var gfxObject = __webpack_require__(116);
 Object.keys(gfxObject).forEach(function (fname) {
   baseClass[fname] = gfxObject[fname];
 });
@@ -28261,19 +28150,19 @@ Object.keys(gfxObject).forEach(function (fname) {
 module.exports = React.createClass(baseClass);
 
 /***/ }),
-/* 122 */
+/* 121 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
 var React = __webpack_require__(1);
-var Graphic = __webpack_require__(121);
-var SectionHeader = __webpack_require__(9);
-var BSplineGraphic = __webpack_require__(111);
-var KnotController = __webpack_require__(109);
-var WeightController = __webpack_require__(108);
-var SliderSet = __webpack_require__(107);
+var Graphic = __webpack_require__(120);
+var SectionHeader = __webpack_require__(8);
+var BSplineGraphic = __webpack_require__(110);
+var KnotController = __webpack_require__(108);
+var WeightController = __webpack_require__(107);
+var SliderSet = __webpack_require__(106);
 
 SectionHeader.locale = "en-GB";
 
@@ -32537,6 +32426,24 @@ module.exports = {
     }
 
   },
+  "yforx": {
+    "locale": "en-GB",
+    "title": "Finding Y, given X",
+    "getContent": function getContent(handler) {
+      return React.createElement(
+        "section",
+        { className: "yforx" },
+        React.createElement(SectionHeader, { name: "yforx", title: "Finding Y, given X", number: "22" }),
+        React.createElement(
+          "p",
+          null,
+          "Test text"
+        ),
+        React.createElement(Graphic, { handler: handler.props.handler, section: "yforx", title: "Finding y(t), given x=x(t)", setup: handler.setup, sname: "setup", draw: handler.draw, dname: "draw" })
+      );
+    }
+
+  },
   "arclength": {
     "locale": "en-GB",
     "title": "Arc length",
@@ -32544,7 +32451,7 @@ module.exports = {
       return React.createElement(
         "section",
         { className: "arclength" },
-        React.createElement(SectionHeader, { name: "arclength", title: "Arc length", number: "22" }),
+        React.createElement(SectionHeader, { name: "arclength", title: "Arc length", number: "23" }),
         React.createElement(
           "p",
           null,
@@ -32848,7 +32755,7 @@ module.exports = {
       return React.createElement(
         "section",
         { className: "arclengthapprox" },
-        React.createElement(SectionHeader, { name: "arclengthapprox", title: "Approximated arc length", number: "23" }),
+        React.createElement(SectionHeader, { name: "arclengthapprox", title: "Approximated arc length", number: "24" }),
         React.createElement(
           "p",
           null,
@@ -32877,7 +32784,7 @@ module.exports = {
       return React.createElement(
         "section",
         { className: "tracing" },
-        React.createElement(SectionHeader, { name: "tracing", title: "Tracing a curve at fixed distance intervals", number: "24" }),
+        React.createElement(SectionHeader, { name: "tracing", title: "Tracing a curve at fixed distance intervals", number: "25" }),
         React.createElement(
           "p",
           null,
@@ -32990,7 +32897,7 @@ module.exports = {
       return React.createElement(
         "section",
         { className: "intersections" },
-        React.createElement(SectionHeader, { name: "intersections", title: "Intersections", number: "25" }),
+        React.createElement(SectionHeader, { name: "intersections", title: "Intersections", number: "26" }),
         React.createElement(
           "p",
           null,
@@ -33076,7 +32983,7 @@ module.exports = {
       return React.createElement(
         "section",
         { className: "curveintersection" },
-        React.createElement(SectionHeader, { name: "curveintersection", title: "Curve/curve intersection", number: "26" }),
+        React.createElement(SectionHeader, { name: "curveintersection", title: "Curve/curve intersection", number: "27" }),
         React.createElement(
           "p",
           null,
@@ -33332,7 +33239,7 @@ module.exports = {
       return React.createElement(
         "section",
         { className: "abc" },
-        React.createElement(SectionHeader, { name: "abc", title: "The projection identity", number: "27" }),
+        React.createElement(SectionHeader, { name: "abc", title: "The projection identity", number: "28" }),
         React.createElement(
           "p",
           null,
@@ -33595,7 +33502,7 @@ module.exports = {
       return React.createElement(
         "section",
         { className: "moulding" },
-        React.createElement(SectionHeader, { name: "moulding", title: "Manipulating a curve", number: "28" }),
+        React.createElement(SectionHeader, { name: "moulding", title: "Manipulating a curve", number: "29" }),
         React.createElement(
           "p",
           null,
@@ -33682,7 +33589,7 @@ module.exports = {
       return React.createElement(
         "section",
         { className: "pointcurves" },
-        React.createElement(SectionHeader, { name: "pointcurves", title: "Creating a curve from three points", number: "29" }),
+        React.createElement(SectionHeader, { name: "pointcurves", title: "Creating a curve from three points", number: "30" }),
         React.createElement(
           "p",
           null,
@@ -33752,7 +33659,7 @@ module.exports = {
       return React.createElement(
         "section",
         { className: "curvefitting" },
-        React.createElement(SectionHeader, { name: "curvefitting", title: "Curve fitting", number: "30" }),
+        React.createElement(SectionHeader, { name: "curvefitting", title: "Curve fitting", number: "31" }),
         React.createElement(
           "p",
           null,
@@ -34359,7 +34266,7 @@ module.exports = {
       return React.createElement(
         "section",
         { className: "catmullconv" },
-        React.createElement(SectionHeader, { name: "catmullconv", title: "B\xE9zier curves and Catmull-Rom curves", number: "31" }),
+        React.createElement(SectionHeader, { name: "catmullconv", title: "B\xE9zier curves and Catmull-Rom curves", number: "32" }),
         React.createElement(
           "p",
           null,
@@ -34531,7 +34438,7 @@ module.exports = {
       return React.createElement(
         "section",
         { className: "catmullmoulding" },
-        React.createElement(SectionHeader, { name: "catmullmoulding", title: "Creating a Catmull-Rom curve from three points", number: "32" }),
+        React.createElement(SectionHeader, { name: "catmullmoulding", title: "Creating a Catmull-Rom curve from three points", number: "33" }),
         React.createElement(
           "p",
           null,
@@ -34581,7 +34488,7 @@ module.exports = {
       return React.createElement(
         "section",
         { className: "polybezier" },
-        React.createElement(SectionHeader, { name: "polybezier", title: "Forming poly-B\xE9zier curves", number: "33" }),
+        React.createElement(SectionHeader, { name: "polybezier", title: "Forming poly-B\xE9zier curves", number: "34" }),
         React.createElement(
           "p",
           null,
@@ -34694,7 +34601,7 @@ module.exports = {
       return React.createElement(
         "section",
         { className: "shapes" },
-        React.createElement(SectionHeader, { name: "shapes", title: "Boolean shape operations", number: "34" }),
+        React.createElement(SectionHeader, { name: "shapes", title: "Boolean shape operations", number: "35" }),
         React.createElement(
           "p",
           null,
@@ -34841,80 +34748,6 @@ module.exports = {
             );
           })
         )
-      );
-    }
-
-  },
-  "drawing": {
-    "locale": "en-GB",
-    "title": "Drawing Bezier paths",
-    "getContent": function getContent(handler) {
-      return React.createElement(
-        "section",
-        { className: "drawing" },
-        React.createElement(SectionHeader, { name: "drawing", title: "Drawing Bezier paths", number: "35" }),
-        React.createElement(
-          "ul",
-          null,
-          React.createElement(
-            "li",
-            null,
-            "draw with a mouse, stylus, or finger"
-          ),
-          React.createElement(
-            "li",
-            null,
-            React.createElement(
-              "a",
-              { href: "https://en.wikipedia.org/wiki/Ramer%E2%80%93Douglas%E2%80%93Peucker_algorithm" },
-              "Ramer\u2013Douglas\u2013Peucker"
-            ),
-            " to reduce the number of points along the path"
-          ),
-          React.createElement(
-            "li",
-            null,
-            "abstract curve through points:",
-            React.createElement(
-              "ul",
-              null,
-              React.createElement(
-                "li",
-                null,
-                "fit compound quadratic/cubic bezier",
-                React.createElement(
-                  "ul",
-                  null,
-                  React.createElement(
-                    "li",
-                    null,
-                    "naive"
-                  ),
-                  React.createElement(
-                    "li",
-                    null,
-                    "corrected for C1/C2"
-                  )
-                )
-              ),
-              React.createElement(
-                "li",
-                null,
-                "also fit using catmull-rom approach",
-                React.createElement(
-                  "ul",
-                  null,
-                  React.createElement(
-                    "li",
-                    null,
-                    "simpler, \"easier\" control, but can look very different/wrong."
-                  )
-                )
-              )
-            )
-          )
-        ),
-        React.createElement(Graphic, { handler: handler.props.handler, section: "drawing", title: "Drawing a B\xE9zier curve", setup: handler.setup, sname: "setup", draw: handler.draw, dname: "draw", onMouseUp: handler.onMouseUp, onMouseDrag: handler.onMouseDrag })
       );
     }
 
@@ -37392,7 +37225,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 123 */
+/* 122 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -37400,7 +37233,7 @@ module.exports = {
 
 var React = __webpack_require__(1);
 
-var Locale = __webpack_require__(12);
+var Locale = __webpack_require__(11);
 var locale = new Locale();
 var page = "locale-switcher";
 
@@ -37413,18 +37246,18 @@ module.exports = function (props) {
 };
 
 /***/ }),
-/* 124 */
+/* 123 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
 module.exports = {
-  "LocaleSwitcher": __webpack_require__(123)
+  "LocaleSwitcher": __webpack_require__(122)
 };
 
 /***/ }),
-/* 125 */
+/* 124 */
 /***/ (function(module, exports) {
 
 module.exports = {
@@ -37510,14 +37343,14 @@ module.exports = {
 
 
 /***/ }),
-/* 126 */
+/* 125 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
 var React = __webpack_require__(1);
-var changelog = __webpack_require__(125);
+var changelog = __webpack_require__(124);
 
 var Changelog = React.createClass({
   displayName: "Changelog",
@@ -37598,7 +37431,7 @@ var Changelog = React.createClass({
 module.exports = Changelog;
 
 /***/ }),
-/* 127 */
+/* 126 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -37630,7 +37463,7 @@ var Header = React.createClass({
 module.exports = Header;
 
 /***/ }),
-/* 128 */
+/* 127 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -37664,7 +37497,7 @@ var Ribbon = React.createClass({
 module.exports = Ribbon;
 
 /***/ }),
-/* 129 */
+/* 128 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -37672,12 +37505,12 @@ module.exports = Ribbon;
 
 var React = __webpack_require__(1);
 
-var Ribbon = __webpack_require__(128);
-var Header = __webpack_require__(127);
-var Changelog = __webpack_require__(126);
-var LocaleSwitcher = __webpack_require__(124).LocaleSwitcher;
-var Navigation = __webpack_require__(106);
-var Footer = __webpack_require__(13);
+var Ribbon = __webpack_require__(127);
+var Header = __webpack_require__(126);
+var Changelog = __webpack_require__(125);
+var LocaleSwitcher = __webpack_require__(123).LocaleSwitcher;
+var Navigation = __webpack_require__(105);
+var Footer = __webpack_require__(12);
 
 var Page = React.createClass({
   displayName: "Page",
@@ -37708,16 +37541,16 @@ var Page = React.createClass({
 module.exports = Page;
 
 /***/ }),
-/* 130 */
+/* 129 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
 var React = __webpack_require__(1);
-var Page = __webpack_require__(129);
+var Page = __webpack_require__(128);
 
-var sectionList = __webpack_require__(8),
+var sectionList = __webpack_require__(7),
     sectionMap = function sectionMap(mapping) {
   return Object.keys(sectionList).map(mapping);
 },
@@ -37741,7 +37574,7 @@ var FullArticle = React.createClass({
 module.exports = FullArticle;
 
 /***/ }),
-/* 131 */
+/* 130 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -37760,7 +37593,7 @@ module.exports = ReactPropTypesSecret;
 
 
 /***/ }),
-/* 132 */
+/* 131 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -37773,7 +37606,7 @@ module.exports = ReactPropTypesSecret;
 
 
 
-var ReactPropTypesSecret = __webpack_require__(131);
+var ReactPropTypesSecret = __webpack_require__(130);
 
 function emptyFunction() {}
 
@@ -37826,7 +37659,7 @@ module.exports = function() {
 
 
 /***/ }),
-/* 133 */
+/* 132 */
 /***/ (function(module, exports) {
 
 // shim for using process in browser
@@ -38016,7 +37849,7 @@ process.umask = function() { return 0; };
 
 
 /***/ }),
-/* 134 */
+/* 133 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -38024,7 +37857,7 @@ process.umask = function() { return 0; };
 
 var React = __webpack_require__(1);
 var ReactDOM = __webpack_require__(1);
-var FullArticle = __webpack_require__(130);
+var FullArticle = __webpack_require__(129);
 
 // in the browser, do:
 if (typeof document !== "undefined") {
@@ -38035,10 +37868,10 @@ if (typeof document !== "undefined") {
 module.exports = { FullArticle: FullArticle };
 
 /***/ }),
-/* 135 */
+/* 134 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(134);
+module.exports = __webpack_require__(133);
 
 
 /***/ })

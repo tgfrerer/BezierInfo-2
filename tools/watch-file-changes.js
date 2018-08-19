@@ -53,11 +53,13 @@ function monitor(watcher, scripts) {
 }
 
 /**
- * Watch for changes
+ * Watch for code changes
  */
 monitor(
   chokidar.watch([
     'components/**/*.js',
+    'components/**/*.md',
+    'components/**/*.jsx',
     'lib/**/*.js',
     'changelog.js'
   ], {
@@ -69,9 +71,13 @@ monitor(
   rebuildScripts
 );
 
+/**
+ * Watch for style changes
+ */
 monitor(
-  chokidar.watch('components/**/*.md'),
-  rebuildScripts
+  chokidar.watch(
+    'stylesheets/*.less'
+  ), [
+    "less"
+  ]
 );
-
-monitor(chokidar.watch('stylesheets/*.less'), ["less"]);

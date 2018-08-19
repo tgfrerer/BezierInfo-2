@@ -3,6 +3,9 @@ var path = require("path");
 const BASEDIR = path.join(__dirname, "..");
 
 // copy the en-GB content as default content
+
+console.log('base:', BASEDIR);
+
 fs.copySync(path.join(BASEDIR, "en-GB/index.html"), path.join(BASEDIR, "index.html"));
 fs.copySync(path.join(BASEDIR, "en-GB/article.js"), path.join(BASEDIR, "article.js"));
 

@@ -9,5 +9,6 @@
   - also fit using catmull-rom approach
   	- simpler, "easier" control, but can look very different/wrong.
 
-<Graphic title="Drawing a Bézier curve" setup={this.setup} draw={this.draw} onMouseUp={this.onMouseUp} onMouseDrag={this.onMouseDrag} />
-
+<Graphic title="Drawing a Bézier curve" setup={this.setup} draw={this.draw} onMouseUp={this.onMouseUp} onMouseDrag={this.onMouseDrag}>
+	<SliderSet ref={ set => (this.sliders=set) } min={0} max={6000} step={1} onChange={this.updateTightness} getLabel={this.getLabel} getValueLabel={this.getValueLabel} />
+</Graphic>

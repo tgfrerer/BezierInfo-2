@@ -35,8 +35,9 @@ module.exports = {
   tightbounds: require("./tightbounds"),
   inflections: require("./inflections"),
   canonical: require("./canonical"),
+  yforx: require("./yforx"),
 
-  // accurate arc length is hard, yo
+  // accurate arc length is hard.
   arclength: require("./arclength"),
   arclengthapprox: require("./arclengthapprox"),
   tracing: require("./tracing"),
@@ -58,7 +59,7 @@ module.exports = {
   // "things made of more than on curve"
   polybezier: require("./polybezier"),
   shapes: require("./shapes"),
-  drawing: require("./drawing"),
+//  drawing: require("./drawing"),
 
   // curve offsetting
   projections: require("./projections"),

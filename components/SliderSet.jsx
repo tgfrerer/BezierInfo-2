@@ -1,5 +1,8 @@
 var React = require("react");
 
+/**
+ * Use as <SliderSet options={ [v1, v2, ...] } getLabel={ function() } />
+ */
 class SliderSet extends React.Component {
   constructor(props) {
     super(props);
@@ -11,11 +14,17 @@ class SliderSet extends React.Component {
     var min = props.min || 0;
     var max = props.max || 1;
     var step = props.step || (max-min) / 100;
+
+    var getLabel = props.getLabel;
+    var getValueLabel = props.getValueLabel;
+
     var rows = this.options;
     var sliders = rows.map( (v,i) => {
+      var label = getLabel ? getLabel(i) : <span>t<sub>{ i }</sub></span>;
+      var valueLabel = getValueLabel ? getValueLabel(i) : (v + "").substring(0,4);
       return (
         <div>
-          <label>t<sub>{ i }</sub></label>
+          <label>{ label }</label>
           <input
             type="range"
             key={`row${i}`}
@@ -26,8 +35,9 @@ class SliderSet extends React.Component {
             onChange={e => {
               this.options[i] = e.target.value;
               props.onChange(i, this.options);
+              this.forceUpdate();
             }} />
-            <span>{ parseFloat(v).toFixed(2) }</span>
+            <span>{ valueLabel }</span>
         </div>
       );
     });
